@@ -1,0 +1,158 @@
+%{
+\documentclass[12pt,a4paper]{article}
+\usepackage[utf8x]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{ucs}
+\usepackage[MeX]{polski}
+\usepackage{fancyhdr}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{enumitem}     
+\usepackage{setspace} 
+\usepackage{float} 
+\usepackage{indentfirst} % wcięcie pierwszego akapitu jak w języku polskim
+
+\usepackage[bottom=0.5in]{geometry}
+\usepackage{bold-extra}
+
+\usepackage{pgfplots}
+\usepackage{multirow} 
+\usepackage{multicol}    
+\usepackage{listings}   
+\usepackage{subcaption}
+\usepackage{color} %red, green, blue, yellow, cyan, magenta, black, white
+\definecolor{mygreen}{RGB}{28,172,0} % color values Red, Green, Blue
+\definecolor{mylilas}{RGB}{170,55,241}
+\pgfplotsset{compat=1.17}
+%\pagestyle{fancy}
+%\usepackage[margin=3cm]{geometry}
+\usepackage{booktabs}
+\usepackage{hyperref} %reflinki, głownie używam do hiperlinków do tableofcontent
+\hypersetup{  %ustawiena do hiperlinków
+    colorlinks=true,
+    linkcolor=black,
+    filecolor=magenta,      
+    urlcolor=blue,
+    pdftitle={Overleaf Example},
+    pdfpagemode=FullScreen,
+}
+\lstset{language=Python,%
+    %basicstyle=\color{red}, 
+    breaklines=true,%
+    basicstyle=\scriptsize,
+    morekeywords={matlab2tikz},
+    keywordstyle=\color{blue},%
+    morekeywords=[2]{1}, keywordstyle=[2]{\color{black}},
+    identifierstyle=\color{black},%
+    stringstyle=\color{mylilas},
+    commentstyle=\color{mygreen},%
+    showstringspaces=false,%without this there will be a symbol in the places where there is a space
+    numbers=left,%
+    numberstyle={\tiny \color{black}},% size of the numbers
+    numbersep=7pt, % this defines how far the numbers are from the text
+    emph=[1]{for,end,break},emphstyle=[1]\color{red}, %some words to emphasise
+    %emph=[2]{word1,word2}, emphstyle=[2]{style},    
+}
+%}
+\begin{document} 
+
+\input{title}
+
+\section{Opis problemu}
+
+\section{Model matematyczny obiektu holonomicznego}
+
+\emph{W poniższym dokumencie stosuje się notację skróconą dla funkcji trygonometrycznych, gdzie sinus zapisuje się jako $s$, a cosinus jako $c$}.\\
+\\
+Rozważając układy nieliniowe, których prostym przykładem jest dwuwahadło należy przeanalizować dynamikę, dzięki której opisuje się ewolucję układu dla danych warunków początkowych. Dynamikę układu bez strat energii opisuje równanie (\ref{eq:1}).
+
+\begin{equation}
+    \mathbf{M}(\ddot{q})\ddot{q} + \mathbf{C}(q, \dot{q})\dot{q} + \mathbf{D}(q) = u,\label{eq:1}
+\end{equation}
+
+gdzie
+
+\begin{itemize}
+    \item $\mathbf{M}$ to macierz bezwładności,
+    \item $\mathbf{C}$ to macierz sił odśrodkowych i Coriolisa,
+    \item $\mathbf{D}$ to wektor sił potencjalnych,
+    \item $u$ to zadawane sterowanie,
+    \item $q$ to współrzędna uogólniona.
+\end{itemize}
+
+Dla rozważanego układu macierze są zdefiniowane, jako
+
+$$\mathbf{M} = \begin{bmatrix}
+\theta_1 + 0.6\theta_4c_2 & \theta_3+0.3\theta_4c_2\\
+\theta_3+0.3\theta_4c_2 & \theta_3
+\end{bmatrix},$$
+
+$$\mathbf{C} = 0.3\theta_4s_2\begin{bmatrix}
+-\dot{q}_2 &-(\dot{q}_1 + \dot{q_2})\\
+\dot{q}_1 & 0
+\end{bmatrix},$$
+
+$$\mathbf{D} = g\begin{bmatrix}
+\theta_2c_1 + 0.4c_{12}\\
+\theta_4+0.3c_{12}
+\end{bmatrix},$$
+
+gdzie $\theta_i$ to parametry inercyjne, równe odpowiednio
+
+\begin{itemize}
+    \item $\theta_1 = I_1 + I_2 + m_2l_1^2~[\text{kgm}^2]$,
+    \item $\theta_2 = m_1p_1 + m_2l_1=9.5~[\text{kgm}]$,
+    \item $\theta_3 = I_2 = 0.24~[\text{kgm}^2]$,
+    \item $\theta_4 = m_2p_2 = 0.77~[\text{kgm}]$,
+\end{itemize}
+
+gdzie $I_i$ to moment bezwładności, $m_i$ masa, $l_i$ długość, $p_i$ $i$-tego ramienia.
+
+Macierz $\mathbf{M}$ posiada charakterystyczne cechy, które ją definiują. Są to:
+
+\begin{enumerate}
+    \item Symetryczność $\mathbf{M}^T = \mathbf{M}$,
+    \item Dodatniaokreśloność $\mathbf{M} > 0$,
+    \item Skośna symetria $\dot{\mathbf{M}} = \mathbf{C} + \mathbf{C}^T$
+\end{enumerate}
+
+\section{Wartość zadana}
+
+Aby zamodelować ten układ należy wyznaczyć ze wzoru (\ref{eq:1}) przyspieszenie uogólnione. W ten sposób otrzymuje się
+
+$$\ddot{q} = \mathbf{M}^{-1}(u-\mathbf{C}\dot{q}-\mathbf{D})$$
+
+Zadany ruch układu jest drgający harmoniczny dla każdego ramienia dany wzorami
+
+$$q_{1d}(t) = A\cos\left(\frac{t}{B}\right),$$
+$$q_{2d}(t) = \frac{1}{D}\sin(Ct),$$
+
+gdzie $A,~B,~C,~D$ to stałe utworzone z numeru indeksu. Dla tego przypadku wynoszą one odpowiednio 7, 8, 1, 7.
+
+\section{Algorytm QuDorsey'a}
+
+\section{Algorytm dokładnej linearyzacji}
+
+\subsection{Analiza stabilności}
+
+\section{Badania symulacyjne}
+
+%dać tyle wykresów, żeby wyjasnić to co na zajęciach się wyjasniało
+
+\section{Wnioski}
+
+\begin{itemize}
+    \item algorytm QuDorsey'a można prosto zrealizować
+    \item algorytm QuDorsey'a nie daje gwarancji zbieżności
+    \item człon proporcjonalny odpowiada za samą regulację, jako wprowadzenie oscylacji wokół położenia równowagi
+    \item człon różniczkujący odpowiada za gładkość stabilizacji
+    \item im większy człon proporcjonalny, tym szybsza stabilizacja i większe oscylacje
+    \item im większy człon różniczkujący, tym wolniejsza stabilizacja, ale gładsza
+    \item algorytm dokładnej linearyzacji gwarantuje zbieżność
+    \item algorytm dokładnej linearyzacji daje pomijalne błędy (dla członów dodatniookreślonych), ale jest trudniejszy w realizacji (należy wprowadzić transformację)
+    \item regulacja ma sens jedynie dla członów dodatniookreślonych
+    \item dla członów z zerami na przekątnych algorytm dokładnej linearyzacji przeprowadza układ na granicę stabilności, która bierze się z $\ddot{q}_d$
+\end{itemize}
+
+\end{document}
