@@ -11,6 +11,7 @@
 \usepackage{enumitem}     
 \usepackage{setspace} 
 \usepackage{float} 
+\usepackage{mathrsfs}
 \usepackage{indentfirst} % wcięcie pierwszego akapitu jak w języku polskim
 
 \usepackage[bottom=0.5in]{geometry}
@@ -31,7 +32,7 @@
 \usepackage{hyperref} %reflinki, głownie używam do hiperlinków do tableofcontent
 \hypersetup{  %ustawiena do hiperlinków
     colorlinks=true,
-    linkcolor=black,
+    linkcolor=red,
     filecolor=magenta,      
     urlcolor=blue,
     pdftitle={Overleaf Example},
@@ -54,6 +55,10 @@
     emph=[1]{for,end,break},emphstyle=[1]\color{red}, %some words to emphasise
     %emph=[2]{word1,word2}, emphstyle=[2]{style},    
 }
+
+\newcommand{\mb}[1]{\mathbf{#1}}
+\newcommand{\Kp}{$\mb{K}_p$}
+\newcommand{\Kd}{$\mb{K}_d$}
 %}
 \begin{document} 
 
@@ -61,14 +66,20 @@
 
 \section{Opis problemu}
 
-\section{Model matematyczny obiektu holonomicznego}
-
 \emph{W poniższym dokumencie stosuje się notację skróconą dla funkcji trygonometrycznych, gdzie sinus zapisuje się jako $s$, a cosinus jako $c$}.\\
 \\
-Rozważając układy nieliniowe, których prostym przykładem jest dwuwahadło należy przeanalizować dynamikę, dzięki której opisuje się ewolucję układu dla danych warunków początkowych. Dynamikę układu bez strat energii opisuje równanie (\ref{eq:1}).
+Układem holonomicznym nazywamy obiekt fizyczny, którego wszystkie ograniczenia ruchu (więzy) można wyrazić za pomocą równań algebraicznych zależnych wyłącznie od jego współrzędnych położenia. W mechanice ograniczenia holonomiczne zapisać można jako 
+
+$$f(\mb{q}, t) = 0,$$
+
+gdzie $\mb{q} \in \mathbb{R}^n$ oznacza przestrzeń konfiguracyjną obiektu. Charakterystyczną cechą sterowania obiektami holonomicznymi jest bezpośrednie przełożenie sterowań na prędkości~\cite{Tchon::Robotyka}. Istnieje wiele metod sterowania, dwa z nich to sterowanie do punktu, gdzie obiekt musi osiągnąć daną pozycję i ją utrzymać oraz śledzenie trajektorii, gdzie obiekt musi poruszać się po zadanej ścieżce w odpowiednim czasie. W tym dokumencie rozważane są dwa algorytmy sterowania takimi obiektami.
+
+\section{Model matematyczny obiektu holonomicznego}
+
+Rozważając układy nieliniowe, których prostym przykładem jest dwuwahadło należy przeanalizować dynamikę, która opisuje ewolucję układu dla danych warunków początkowych~\cite{Tchon::MA}. Dynamikę układu bez strat energii opisuje równanie (\ref{eq:1}).
 
 \begin{equation}
-    \mathbf{M}(\ddot{q})\ddot{q} + \mathbf{C}(q, \dot{q})\dot{q} + \mathbf{D}(q) = u,\label{eq:1}
+    \mathbf{M}(\ddot{\mb{q}})\ddot{\mb{q}} + \mathbf{C}(\mb{q}, \dot{\mb{q}})\dot{\mb{q}} + \mathbf{D}(\mb{q}) = \mb{u},\label{eq:1}
 \end{equation}
 
 gdzie
@@ -77,8 +88,8 @@ gdzie
     \item $\mathbf{M}$ to macierz bezwładności,
     \item $\mathbf{C}$ to macierz sił odśrodkowych i Coriolisa,
     \item $\mathbf{D}$ to wektor sił potencjalnych,
-    \item $u$ to zadawane sterowanie,
-    \item $q$ to współrzędna uogólniona.
+    \item $\mb{u}$ to zadawane sterowanie,
+    \item $\mb{q}$ to współrzędne uogólnione.
 \end{itemize}
 
 Dla rozważanego układu macierze są zdefiniowane, jako
@@ -98,7 +109,7 @@ $$\mathbf{D} = g\begin{bmatrix}
 \theta_4+0.3c_{12}
 \end{bmatrix},$$
 
-gdzie $\theta_i$ to parametry inercyjne, równe odpowiednio
+gdzie $\theta_i$ to parametry inercyjne, równe odpowiednio:
 
 \begin{itemize}
     \item $\theta_1 = I_1 + I_2 + m_2l_1^2~[\text{kgm}^2]$,
@@ -107,44 +118,241 @@ gdzie $\theta_i$ to parametry inercyjne, równe odpowiednio
     \item $\theta_4 = m_2p_2 = 0.77~[\text{kgm}]$,
 \end{itemize}
 
-gdzie $I_i$ to moment bezwładności, $m_i$ masa, $l_i$ długość, $p_i$ $i$-tego ramienia.
-
+gdzie $I_i$ to moment bezwładności, $m_i$ masa, $l_i$ długość $i$-tego ramienia, $p_i$ położenie środka masy $i$-tego przegubu.\\
+\\
 Macierz $\mathbf{M}$ posiada charakterystyczne cechy, które ją definiują. Są to:
 
 \begin{enumerate}
     \item Symetryczność $\mathbf{M}^T = \mathbf{M}$,
     \item Dodatniaokreśloność $\mathbf{M} > 0$,
-    \item Skośna symetria $\dot{\mathbf{M}} = \mathbf{C} + \mathbf{C}^T$
+    \item Skośna symetria $\dot{\mathbf{M}} = \mathbf{C} + \mathbf{C}^T.$
 \end{enumerate}
 
 \section{Wartość zadana}
 
 Aby zamodelować ten układ należy wyznaczyć ze wzoru (\ref{eq:1}) przyspieszenie uogólnione. W ten sposób otrzymuje się
 
-$$\ddot{q} = \mathbf{M}^{-1}(u-\mathbf{C}\dot{q}-\mathbf{D})$$
+\begin{equation}
+\mb{\ddot{q}} = \mathbf{M}^{-1}(\mb{u}-\mathbf{C\dot{q}}-\mathbf{D}).\label{eq:ddotq}
+\end{equation}
 
-Zadany ruch układu jest drgający harmoniczny dla każdego ramienia dany wzorami
+Zadany ruch układu jest drgający harmoniczny, dla każdego ramienia dany równaniami
 
-$$q_{1d}(t) = A\cos\left(\frac{t}{B}\right),$$
-$$q_{2d}(t) = \frac{1}{D}\sin(Ct),$$
+\begin{equation}
+\begin{matrix} 
+q_{1d}(t) = A\cos\left(\frac{t}{B}\right),\\\\ \label{eq:traj}
+q_{2d}(t) = \frac{1}{D}\sin(Ct),\end{matrix}
+\end{equation}
 
 gdzie $A,~B,~C,~D$ to stałe utworzone z numeru indeksu. Dla tego przypadku wynoszą one odpowiednio 7, 8, 1, 7.
 
-\section{Algorytm QuDorsey'a}
+\section{Algorytm Qu-Dorsey'a}
+
+Algorytm polega na dobraniu odpowiednich macierzy wzmocnień $\mb{K}_p$ i $\mb{K}_d$, które muszą być dodatniookreślone~\cite{Tchon::MAN}. Sterowanie jest postaci
+
+\begin{equation}
+\mb{u} = -\mb{K}_d\dot{\mb{e}} - \mb{K}_p\mb{e}.\label{eq:qudorsey}
+\end{equation}
+
+Przy $t \rightarrow \infty$ uchyb $\mb{e}(t) = \mb{q}(t) - \mb{q}_d(t) \rightarrow \mathscr{O},$ gdzie $\mathscr{O}$ oznacza kulę o pewnym dodatnim promieniu. Błąd w tym przypadku dąży zatem do pewnej ustalonej wartości niekoniecznie równej zero. 
 
 \section{Algorytm dokładnej linearyzacji}
 
+Wykorzystywany jest tu układ ze statycznym sprzężeniem zwrotnym. Sygnał sterujący jest postaci
+
+\begin{equation}
+    \mb{u} = \mb{Q}(\mb{q})\mb{v} + \mb{C}(\mb{q},\dot{\mb{q}})\dot{\mb{q}} + \mb{D}(\mb{q}),
+\end{equation}
+
+gdzie $\mb{v}$ jest nowym wektorem sterowań. Po podstawieniu sterowania do modelu dynamiki (\ref{eq:1}) pewne wyrazy się upraszczają do podwójnego integratora
+
+\begin{equation}
+    \ddot{\mb{q}} = \mb{v}.
+\end{equation}
+
+Dla zapewnienia śledzenia trajektorii $\mb{q}_d(t)$ należy podać na wejście sygnał z regulatora. Opisuje to równanie (\ref{eq:2}).
+
+\begin{equation}
+    \mb{v} = \ddot{\mb{q}}_d - \mb{K}_d\dot{\mb{e}} - \mb{K}_p \mb{e},\label{eq:2}
+\end{equation}
+
+gdzie $\mb{e}(t) = \mb{q}(t) - \mb{q}_d(t)$ oznacza uchyb, czyli błąd śledzenia położenia. Oczywiście całość ma sens, gdy macierze $\mb{K}_d$ i $\mb{K}_d$ są dodatniookreślone. 
+
 \subsection{Analiza stabilności}
+
+Niech $\mb{v} = \ddot{\mb{q_d}}$. Wtedy pętla sprzężenia zwrotnego $\ddot{\mb{q}} = \ddot{\mb{q}}_d$. Z definicji uchybu $\mb{e}(t) = \mb{q}(t) - \mb{q}_d(t)$ co daje $\ddot{\mb{e}}(t) = \mb{0}$. Zapisując transformację Laplace'a obustronnie otrzymuje się
+
+$$\mathscr{L}\{\ddot{\mb{e}}(t)\} = 0$$
+
+$$s^2E(s) = 0$$.
+
+Równanie to ma biegun $s = 0$ co daje granicę stabilności. Niech zatem $\mb{v} = \ddot{\mb{q}}_d - \mb{K}_d\dot{\mb{e}} - \mb{K}_p\mb{e}$. Przeprowadzając analogiczne rozważania otrzymuje się
+
+$$\mathscr{L}\{\ddot{\mb{e}} + \mb{K}_d\dot{\mb{e}} + \mb{K}_p\mb{e}\} = \mb{0}.$$
+
+Co daje ostatecznie równanie
+
+$$E(s)(s^2+\mb{K}_ds+\mb{K}_p) = \mb{0}.$$
+
+Dla takiego równania bieguny znajdują się w lewej półpłaszczyźnie zespolonej dla $\mb{K}_d > 0$ oraz $\mb{K}_p > 0$~\cite{Wyklad}.
 
 \section{Badania symulacyjne}
 
-%dać tyle wykresów, żeby wyjasnić to co na zajęciach się wyjasniało
+Badania przeprowadzono w środowisku \emph{Matlab/Simulink}, gdzie zaimplementowano manipulator EDDA (podwójne wahadło), regulator oraz generator trajektorii. Macierze $\mb{K}_p$ oraz $\mb{K}_d$ zapisano jako 
+
+$$\mb{K}_p = \begin{bmatrix}
+    K_{p11}& 0\\
+    0 & K_{p22}
+\end{bmatrix},$$
+
+$$\mb{K}_d = \begin{bmatrix}
+    K_{d11}& 0\\
+    0 & K_{d22}
+\end{bmatrix},$$
+
+gdzie $K_{p11} = K_{p22} > 0$, $K_{d11} = K_{d22} > 0$. Wartości większe od zera zapewniają dodatniookreśloność. Badania przeprowadzano zmieniając parametry o rzędy wielkości, badając wpływ każdego parametru.
+
+\subsection{Implementacja}
+
+Dla każdego algorytmu utworzono skrypt w Matlabie, gdzie zamieszczono definicję stałych. Znajdują się tam również formuły do wyrysowania interesujących parametrów w czasie. Implementację manipulatora można zrealizować poprzez metodę połączeń skalarnych, która jest prosta, ale powoduje duży bałagan w połączeniach. Można to uprościć wykorzystując znaczniki, znane również z takich środowisk jak \emph{KiCAD}, czy \emph{Altium Designer} do łączenia wyprowadzeń. Druga metoda to zastosowanie funkcji Matlaba do zrealizowania jakiejś operacji. W tym opracowaniu wykorzystywano obie metody, jednak bardziej niezawodna okazała się metoda z wykorzystaniem funkcji.\\
+\\
+Kluczową funkcjonalnością, jaką daje środowisko jest to, że można zamknąć zaimplementowany układ w system z określonymi wejściami i wyjściami~\cite{mathworks}. Przykład takiego systemu przedstawiono na ilustracji \ref{fig:1}.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.5\linewidth]{fig/edda.png}
+    \caption{Przykład zrealizowanego manipulatora EDDA w postaci systemu}
+    \label{fig:1}
+\end{figure}
+
+\subsection{Algorytm Qu-Dorsey'a}
+
+Do przeprowadzenia sterowania wykonano odpowiednio bloki regulatora, generatora trajektorii oraz samego manipulatora. Zaimplementowano je kolejno opierając się na równaniach (\ref{eq:qudorsey}), (\ref{eq:traj}) oraz (\ref{eq:ddotq}). Ilustracja \ref{fig:qudorsey} przedstawia cały układ symulacyjny.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\linewidth]{fig/qudorsey.png}
+    \caption{Schemat algorytmu Qu-Dorsey'a w \emph{Simulink}}
+    \label{fig:qudorsey}
+\end{figure}
+
+Eksperymenty przeprowadzono dla wartości parametrów zamieszczonych w tabeli \ref{tab:1}. Otrzymane rezultaty przedstawiono na rysunkach \ref{fig:2}, \ref{fig:qudorsey_de}.
+
+\begin{table}[H]
+\centering
+\caption{Wartości parametrów dla symulacji}
+\begin{tabular}{|c|c|c|}
+\hline
+Nr & $\mb{K}_d$ & $\mb{K}_p$ \\ \hline
+1  & 0          & 0          \\ \hline
+2  & 1000       & 10         \\ \hline
+3  & 10         & 1000       \\ \hline
+4  & 1000       & 1000       \\ \hline
+\end{tabular}
+\label{tab:1}
+\end{table}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1\linewidth]{fig/qudorsey_e.png}
+    \caption{Wykresy błędu dla algorytmu Qu-Dorsey'a i zadanych parametrów}
+    \label{fig:2}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1\linewidth]{fig/qudorsey_de.png}
+    \caption{Wykresy pochodnej czasowej błędu dla algorytmu Qu-Dorsey'a i zadanych parametrów}
+    \label{fig:qudorsey_de}
+\end{figure}
+
+Na pierwszym wykresie można zaobserwować zachowanie układu bez żadnej regulacji. Widać, że jedno z ramion wahadła wykonuje bardzo gwałtowne oscylacje. Po zadaniu dużego parametru $\mb{K}_d$ w stosunku do \Kp{} układ nie zdążył się ustabilizować w ciągu zadanego czasu. Wynika stąd, że człon \Kd{} wpływa na czas, w jakim układ osiągnie stabilność.
+
+W przypadku dużego \Kp{} w stosunku do \Kd{} układ szybko się ustabilizował, jednak błąd oscyluje wokół położenia równowagi. Z tego wynika, że człon \Kp{} mimo, że stabilizuje układ, to wprowadza oscylacje.
+
+W przypadku zadania obu parametrów dużymi wartościami efekty obu członów nakładają się -- układ się stabilizuje w niedługim czasie i oscyluje. Potwierdza to teorię, która mówi, że 
+
+\begin{equation}
+\left(\mb{K}_p,~\mb{K}_d \rightarrow \infty\right) \Rightarrow \left(\mb{e},~\dot{\mb{e}} \rightarrow 0 \right).\label{eq:twierdzenie}
+\end{equation}
+
+Analizując wykresy dla pochodnej czasowej błędu również można wyciągnąć istotne informacje. Na pierwszym wykresie z rysunku \ref{fig:qudorsey_de} zaobserwować można, że układ ewoluuje chaotycznie - jego zmiany są gwałtowne i nie przebiegają okresowo. Na drugim wykresie sytuacja jest o tyle inna, że błąd dla jednego z ramion nie zmienia się znacząco, a drugiego oscyluje. Amplituda tych oscylacji jest dwa rzędy wielkości mniejsza niż w przypadku układu bez regulacji. Zgadza się to z wykresami błędów -- w przypadku drugiego wykresu (duże \Kd{} w stosunku do \Kp{}) układ nie zdąża się ustabilizować.
+
+Na wykresie trzecim, gdzie to człon \Kp{} jest dużo większy niż \Kd{} widać, że układ się stabilizuje, bo wykres przechodzi w prostą o równaniu $\mb{e}(t) = 0$. Czwarty wykres pokazuje wpływ obu parametrów -- stabilizację układu w krótkim czasie, jednak z oscylacjami. 
+
+%TO DO
+%subplot dla linearyzacji
+%implementacja linearyzacja
+%spostrzezenia linearyzacja
+
+\subsection{Algorytm dokładnej linearyzacji}
+
+Analogicznie zaimplementowano algorytm w \emph{Simulink}. Przełożono równania na ,,język'' bloków programu. Strukturę połączeń zamieszczono na rysunku \ref{fig:linear}. Podobnie jak poprzednio zastosowano opis funkcyjny dla równań, a połączenia realizowano metodą skalarną.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1\linewidth]{fig/linear_scheme.png}
+    \caption{Schemat algorytmu dokładnej linearyzacji w \emph{Simulink}}
+    \label{fig:linear}
+\end{figure}
+
+Dla tego algorytmu przeprowadzono podobne eksperymenty co dla algorytmu Qu-Dorsey'a. Dobrano parametry takie, jak w tabeli \ref{tab:linear}. Zastosowano tu taką samą analizę jak poprzednio, tzn. badane parametry różnią się o rzędy wielkości. Ostatni eksperyment przeprowadzono dla porównywalnych parametrów różnych od zera.
+
+\begin{table}[H]
+\caption{Wartości parametrów dla symulacji algorytmu dokładnej linearyzacji}
+\centering
+\begin{tabular}{|c|c|c|}
+\hline
+Nr & $\mb{K}_d$ & $\mb{K}_p$ \\ \hline
+1  & 0          & 0          \\ \hline
+2  & 1000       & 10         \\ \hline
+3  & 10         & 1000       \\ \hline
+4  & 1000       & 1000       \\ \hline
+5  & 20         & 30         \\ \hline
+\end{tabular}\label{tab:linear}
+\end{table}
+
+Rezultaty eksperymentów dla błędu sterowania przedstawiono na rysunku \ref{fig:linear_charts}. 
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1\linewidth]{fig/linear_e.png}
+    \caption{Wykresy błędu dla algorytmu dokładnej linearyzacji dla dobranych parametrów}
+    \label{fig:linear_charts}
+\end{figure}
+
+Pierwsze co rzuca się w oczy to rząd wielkości dla błędu. Dla algorytmu Qu-Dorsey'a rząd wynosi $10^0$, natomiast dla dokładnej linearyzacji $10^{-9}$ co jest nieporównywalną różnicą. Na pierwszym wykresie zobaczyć można układ bez żadnej regulacji. Nie powinno zaskakiwać, że błąd jest niezerowy. Na drugim wykresie przy doborze dużego \Kd{} w stosunku do \Kp{} zaobserwować można analogiczne zachowanie jak poprzednio. Układ się stabilizuje po długim czasie. Dopiero przy doborze dużego \Kp{} w stosunku do \Kd{} (wykres 3) algorytm dokładnej linearyzacji pokazuje swoją prawdziwą moc, bo to właśnie tutaj rząd błędu wynosi $10^{-9}$. Oczywiście jak poprzednio parametr \Kp{} wprowadza oscylacje. Dla doboru obu wartości parametrów 1000 znów potwierdza się teoria dana zależnością (\ref{eq:twierdzenie}). W związku ze zwiększeniem parametru \Kd{} czas ustalania wzrósł. Na ostatnim wykresie pokazano przykład dla porównywalnych parametrów \Kp{} i \Kd{}. Tu sytuacja jest podobna jak dla obu parametrów równych 1000, jednak błąd jest większy, a stabilizacja krótsza (ponieważ elementy macierzy \Kp{} są większe niż elementy \Kd{}). \\
+\\
+Warto przeanalizować również wykresy dla pochodnych czasowych błędu. Zamieszczono je na ilustracji \ref{fig:linear_de_charts}.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1\linewidth]{fig/linear_de.png}
+    \caption{Wykresy pochodnych czasowych błędu dla algorytmu dokładnej linearyzacji i dobranych parametrów}
+    \label{fig:linear_de_charts}
+\end{figure}
+
+Wykres pierwszy przedstawia sytuację bez regulacji. Tu nie ma zdziwienia, błąd się nie zmienia, bo nie ma nic co by go zmieniło. Dla dużego \Kd{} w stosunku do \Kp{} widać, że dla jednego ramienia błąd się nie zmienia, a dla drugiego powoli zbiega do zera. Trzeci wykres pokazuje sytuację, gdzie błąd jednego ramienia oscyluje wokół zera dla rzędu wielkości $10^{-8}$, a drugiego ramienia nie zmienia się. Ostatnie dwa wykresy pokazują to samo w różnej skali. Co istotne mimo różnicy dwóch rzędów wielkości, rząd pochodnych jest ten sam (błąd zmienia się tak samo szybko). 
+
+\subsection{Linearyzacja a przybliżenie liniowe}
+
+Mimo, że te pojęcia brzmią podobnie to oznaczają dwa różne zabiegi matematyczne. Przybliżenie liniowe w rachunku różniczkowym jest już znane ze szkoły średniej. Opisywane jest równaniem
+
+$$f(x) \approx f'(x_0)(x-x_0) + f(x_0).$$
+
+Jest to równanie stycznej do wykresu w punkcie ($x_0$, f($x_0$)). Rzeczywiście styczna jest liniowym przybliżeniem funkcji.\\
+\\
+Linearyzacja jest przekształceniem funkcji nieliniowej w liniową. Można to opisać ogólnie jako
+
+$$f(\mb{x}) \approx \sum_{i=1}^n\frac{\partial f(\mb{x}_0)}{\partial x_i}(x-x_i) + f(\mb{x}_0),$$
+
+gdzie $\mb{x}_0$ to punkt pracy linearyzacji. Linearyzacja jest procesem, a przybliżenie liniowe wynikiem linearyzacji. W kontekście inżynierskim przybliżenie liniowe daje konkretne rozwiązanie przybliżone, a linearyzacja upraszcza model systemu do liniowego, aby móc zastosować metody regulacji dla układów liniowych. 
 
 \section{Wnioski}
 
 \begin{itemize}
-    \item algorytm QuDorsey'a można prosto zrealizować
-    \item algorytm QuDorsey'a nie daje gwarancji zbieżności
+    \item algorytm Qu-Dorsey'a można prosto zrealizować
+    \item algorytm Qu-Dorsey'a nie daje gwarancji zbieżności
     \item człon proporcjonalny odpowiada za samą regulację, jako wprowadzenie oscylacji wokół położenia równowagi
     \item człon różniczkujący odpowiada za gładkość stabilizacji
     \item im większy człon proporcjonalny, tym szybsza stabilizacja i większe oscylacje
@@ -152,7 +360,10 @@ gdzie $A,~B,~C,~D$ to stałe utworzone z numeru indeksu. Dla tego przypadku wyno
     \item algorytm dokładnej linearyzacji gwarantuje zbieżność
     \item algorytm dokładnej linearyzacji daje pomijalne błędy (dla członów dodatniookreślonych), ale jest trudniejszy w realizacji (należy wprowadzić transformację)
     \item regulacja ma sens jedynie dla członów dodatniookreślonych
-    \item dla członów z zerami na przekątnych algorytm dokładnej linearyzacji przeprowadza układ na granicę stabilności, która bierze się z $\ddot{q}_d$
+    \item dla członów z zerami na przekątnych algorytm dokładnej linearyzacji przeprowadza układ na granicę stabilności, która bierze się z regulacji poprzez $\ddot{\mb{q}}_d$
+    \item rozważane układy są idealne, w rzeczywistości należy wziąć pod uwagę straty energii
 \end{itemize}
 
+\bibliographystyle{plplain}
+\bibliography{bibliography}
 \end{document}
